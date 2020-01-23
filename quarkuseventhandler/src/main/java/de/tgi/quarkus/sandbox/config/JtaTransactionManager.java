@@ -5,36 +5,39 @@ import org.axonframework.common.transaction.TransactionManager;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 
 @ApplicationScoped
 public class JtaTransactionManager implements TransactionManager {
 
     @Inject
-    private UserTransaction transaction;
+    private javax.transaction.TransactionManager transactionManager;
 
     @Override
     public Transaction startTransaction() {
         try {
-            transaction.begin();
+
+            System.out.println("Blub Status " + String.valueOf(transactionManager.getStatus()));
+            if (transactionManager.getStatus() != 0) {
+                transactionManager.begin();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new JtaTransaction(transaction);
+        return new JtaTransaction(transactionManager);
     }
 
     private class JtaTransaction implements Transaction {
 
-        private UserTransaction transaction;
+        private javax.transaction.TransactionManager transactionManager;
 
-        public JtaTransaction(UserTransaction transaction) {
-            this.transaction = transaction;
+        public JtaTransaction(javax.transaction.TransactionManager transactionManager) {
+            this.transactionManager = transactionManager;
         }
 
         @Override
         public void commit() {
             try {
-                transaction.commit();
+                transactionManager.commit();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -43,7 +46,7 @@ public class JtaTransactionManager implements TransactionManager {
         @Override
         public void rollback() {
             try {
-                transaction.rollback();
+                transactionManager.rollback();
             } catch (Exception e) {
                 e.printStackTrace();
             }
